@@ -1,7 +1,9 @@
-var buttonEl = document.querySelector("#save-task");
+var formEl = document.querySelector("#task-form");
 var tasksToDoEl = document.querySelector("#tasks-to-do");
 
-var createTaskHandler = function() {
+var createTaskHandler = function(event) {
+    //Prevents the automatic refresh that the browser wants to do
+    event.preventDefault();
     //Creates a new task item.
     var listItemEl = document.createElement("li");
     //Adopts the CSS class name AND style
@@ -12,4 +14,4 @@ var createTaskHandler = function() {
     tasksToDoEl.appendChild(listItemEl);
 }
 
-buttonEl.addEventListener("click", createTaskHandler)
+formEl.addEventListener("submit", createTaskHandler)
