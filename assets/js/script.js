@@ -4,6 +4,7 @@ var formEl = document.querySelector("#task-form");
 var tasksToDoEl = document.querySelector("#tasks-to-do");
 var tasksInProgressEl = document.querySelector("#tasks-in-progress");
 var tasksCompletedEl = document.querySelector("#tasks-completed");
+var tasks = [];
 
 var taskFormHandler = function(event) {
     //Prevents the automatic refresh that the browser wants to do
@@ -32,7 +33,8 @@ var taskFormHandler = function(event) {
     else {
         var taskDataObj = {
             name: taskNameInput,
-            type: taskTypeInput
+            type: taskTypeInput,
+            status: "to do"
         };
 
         createTaskEl(taskDataObj);
@@ -51,7 +53,16 @@ var completeEditTask = function(taskName, taskType, taskId) {
 
     formEl.removeAttribute("data-task-id");
     document.querySelector("#save-task").textContent = "Add Task";
-}
+
+    // loop through  tasks array and task object with new content
+    for (var i = 0; i < tasks.length; i++) {
+        if(tasks[i].id === parseInt(taskId)) {
+            tasks[i].name = taskName;
+            tasks[i].type = taskType;
+        }
+    }
+    saveTasks();
+};
 
 var createTaskEl = function(taskDataObj) {
     //Creates list item.
@@ -71,6 +82,11 @@ var createTaskEl = function(taskDataObj) {
 
     //Adds the text
     listItemEl.appendChild(taskInfoEl);
+
+    taskDataObj.id = taskIdCounter;
+    tasks.push(taskDataObj);
+
+    saveTasks();
     
     //creates a variable to store and visually represent task actions created in createTaskActions
     var taskActionsEl = createTaskActions(taskIdCounter);
@@ -149,8 +165,6 @@ var taskButtonHandler = function(event) {
 };
 
 var editTask = function(taskId) {
-    console.log("editing task #" + taskId);
-
     // get task list item element
     var taskSelected = document.querySelector(".task-item[data-task-id='" + taskId + "']");
 
@@ -171,9 +185,24 @@ var deleteTask = function(taskId) {
     var taskSelected = document.querySelector(".task-item[data-task-id='" + taskId + "']")
     //remove selected task according to its taskId
     taskSelected.remove();
+
+    // create new array to hold updated list of tasks
+    var updatedTasksArr = [];
+
+    // loop through current tasks
+    for (var i = 0; i < tasks.length; i++) {
+        // if tasks[i].id doesn't match the value of taskId, let's keep that task and push it into the new array
+        if (tasks[i].id !== parseInt(taskId)) {
+            updatedTasksArr.push(tasks[i]);
+        }
+    }
+
+    // reassign tasks array to be the ame as updatedTasksArr
+    tasks = updatedTasksArr;
+    saveTasks();
 }
 
-var taskStatusChallengeHandler = function(event) {
+var taskStatusChangeHandler = function(event) {
     // get the task item's id
     var taskId = event.target.getAttribute("data-task-id");
 
@@ -192,8 +221,41 @@ var taskStatusChallengeHandler = function(event) {
     else if (statusValue === "completed") {
         tasksCompletedEl.appendChild(taskSelected);
     }
+
+    // update tasks in tasks array
+    for (var i = 0; i < tasks.length; i++) {
+        if (tasks[i].id === parseInt(taskId)) {
+            tasks[i].status = statusValue;
+        }
+    }
+    saveTasks();
+};
+
+var saveTasks = function() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+//get task items from localStorage
+// Convert tasks from the string format back into an array of objects
+//Iterate through a tasks array and create task elements on the page from it
+var loadTasks = function() {
+    var savedTasks = localStorage.getItem("tasks");
+
+    //check if tasks is equal to null by using an if statement
+    if (!savedTasks) {
+        return false;
+    }
+
+    // retrieve the tasks in array format
+    savedTasks = JSON.parse(savedTasks);
+
+    for (var i = 0; i < savedTasks.length; i++) {
+        createTaskEl(savedTasks[i]);
+    }
 }
 
 pageContentEl.addEventListener("click", taskButtonHandler);
 
-pageContentEl.addEventListener("change", taskStatusChallengeHandler);
+pageContentEl.addEventListener("change", taskStatusChangeHandler);
+
+loadTasks();
